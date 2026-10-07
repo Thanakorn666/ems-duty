@@ -83,48 +83,69 @@
   </main>
 
   <script>
-    // ⚠️ เอา URL เว็บแอปของคุณมาวางในเครื่องหมายคำพูดตรงนี้
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwga8HkqMQ3wcUrJ8ZWro6EQ_ILbMOyfCVMjfGqAOxdYpIaQWCcKRFRKWlmBrjbzZwZ/exec";
+    // ⚠️ นำ URL เว็บแอป Google Apps Script ของคุณมาวางตรงนี้
+    const SCRIPT_URL = "วาง_URL_เว็บแอปของคุณ_ตรงนี้";
 
     async function fetchDuty() {
       const loading = document.getElementById("loading");
       const dutyContent = document.getElementById("duty-content");
-      const dateDisplay = document.getElementById("date-display");
 
+      // 1. ดึงข้อมูลที่จำไว้ในเครื่องมาโชว์ทันทีใน 0.05 วินาที
+      const cachedData = localStorage.getItem("ems_cached_roster");
+      if (cachedData) {
+        try {
+          const parsed = JSON.parse(cachedData);
+          applyDutyData(parsed);
+          loading.classList.add("hidden");
+          dutyContent.classList.remove("hidden");
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      // 2. ดึงข้อมูลสดใหม่มาอัปเดตทับเบื้องหลัง
       try {
-        const res = await fetch(SCRIPT_URL);
+        const res = await fetch(SCRIPT_URL + "?t=" + new Date().getTime());
         const data = await res.json();
 
-        // แสดงวันที่ภาษาไทย
-        const todayDate = new Date();
-        dateDisplay.innerText = todayDate.toLocaleDateString("th-TH", {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        });
+        localStorage.setItem("ems_cached_roster", JSON.stringify(data));
 
-        // เปิดป้ายบอกเวรปัจจุบัน
-        if (data.activeShift === "เช้า") {
-          document.getElementById("badge-morning").classList.remove("hidden");
-        } else if (data.activeShift === "บ่าย") {
-          document.getElementById("badge-afternoon").classList.remove("hidden");
-        }
-
-        renderList("morning-list", data.morningStaff, data.activeShift === "เช้า");
-        renderList("afternoon-list", data.afternoonStaff, data.activeShift === "บ่าย");
-
+        applyDutyData(data);
         loading.classList.add("hidden");
         dutyContent.classList.remove("hidden");
 
       } catch (err) {
         console.error(err);
-        loading.innerHTML = `
-          <div class="bg-amber-50 border border-amber-300 rounded-xl p-4 text-amber-800 text-xs">
-            ไม่สามารถเชื่อมต่อตารางเวรได้ในขณะนี้ กรุณาโทรสายด่วน 1669
-          </div>
-        `;
+        if (!cachedData) {
+          loading.innerHTML = `
+            <div class="bg-amber-50 border border-amber-300 rounded-xl p-4 text-amber-800 text-xs text-center font-medium">
+              ไม่สามารถเชื่อมต่อตารางเวรได้ในขณะนี้ กรุณาโทรสายด่วน 1669
+            </div>
+          `;
+        }
       }
+    }
+
+    function applyDutyData(data) {
+      const dateDisplay = document.getElementById("date-display");
+      const todayDate = new Date();
+      dateDisplay.innerText = todayDate.toLocaleDateString("th-TH", {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+
+      const badgeMorning = document.getElementById("badge-morning");
+      const badgeAfternoon = document.getElementById("badge-afternoon");
+
+      if (badgeMorning && badgeAfternoon) {
+        badgeMorning.classList.toggle("hidden", data.activeShift !== "เช้า");
+        badgeAfternoon.classList.toggle("hidden", data.activeShift !== "บ่าย");
+      }
+
+      renderList("morning-list", data.morningStaff, data.activeShift === "เช้า");
+      renderList("afternoon-list", data.afternoonStaff, data.activeShift === "บ่าย");
     }
 
     function renderList(containerId, staffArray, isActiveShift) {
@@ -167,6 +188,11 @@
     }
 
     fetchDuty();
+
+    // ระบบ PWA
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch((err) => console.log(err));
+    }
   </script>
 </body>
 </html>

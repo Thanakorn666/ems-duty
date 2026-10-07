@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>ตารางเวรหน่วยกู้ชีพ</title>
+  <title>ตารางเวรหน่วยกู้ชีพเทศบาลตำบลสามขา</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -14,10 +14,11 @@
 
   <!-- ส่วนหัวเว็บ -->
   <header class="bg-red-600 text-white pt-6 pb-5 px-4 text-center shadow-md sticky top-0 z-30">
-    <div class="inline-flex items-center justify-center w-12 h-12 bg-white rounded-full text-2xl mb-1 shadow-inner">
-      🚑
+    <!-- ของใหม่ -->
+    <div class="inline-flex items-center justify-center w-16 h-16 bg-white rounded-full p-1 mb-2 shadow-md">
+    <img src="logo samkha.png" alt="โลโก้เทศบาลตำบลสามขา" class="w-full h-full object-contain rounded-full">
     </div>
-    <h1 class="text-xl font-bold tracking-tight">หน่วยกู้ชีพเทศบาล</h1>
+    <h1 class="text-xl font-bold tracking-tight">หน่วยกู้ชีพเทศบาลตำบลสามขา</h1>
     <p class="text-xs text-red-100">ตารางเจ้าหน้าที่เข้าเวรประจำวัน</p>
   </header>
 
@@ -82,7 +83,7 @@
   </main>
 
   <script>
-    // ⚠️ นำ URL เว็บแอปที่คัดลอกมาจาก Apps Script มาวางแทนที่ข้อความข้างล่างนี้ (ให้อยู่ในเครื่องหมายคำพูด "")
+    // ⚠️ เอา URL เว็บแอปของคุณมาวางในเครื่องหมายคำพูดตรงนี้
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwga8HkqMQ3wcUrJ8ZWro6EQ_ILbMOyfCVMjfGqAOxdYpIaQWCcKRFRKWlmBrjbzZwZ/exec";
 
     async function fetchDuty() {
@@ -103,7 +104,7 @@
           day: 'numeric'
         });
 
-        // เปิดป้ายบอกเวรที่กำลังปฏิบัติหน้าที่อยู่ ณ ขณะนั้น
+        // เปิดป้ายบอกเวรปัจจุบัน
         if (data.activeShift === "เช้า") {
           document.getElementById("badge-morning").classList.remove("hidden");
         } else if (data.activeShift === "บ่าย") {

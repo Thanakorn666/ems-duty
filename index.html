@@ -48,12 +48,13 @@
         <span class="text-[11px] font-semibold text-slate-400 block uppercase tracking-wider">ข้อมูลเวรประจำวัน</span>
         <h2 id="date-display" class="text-sm font-bold text-slate-800 mt-0.5">กำลังโหลดข้อมูล...</h2>
       </div>
-      <div class="relative flex items-center">
-        <label for="date-picker" class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 text-xs font-semibold px-3 py-2 rounded-xl cursor-pointer transition border border-slate-200 shadow-sm">
-          <span></span>
-          <span>เลือกวัน</span>
-        </label>
-        <input type="date" id="date-picker" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
+      <!-- ของใหม่: แตะได้เต็มพื้นที่กล่อง 100% -->
+      <div class="relative inline-flex items-center justify-center bg-slate-100 hover:bg-slate-200 active:scale-95 px-3 py-2 rounded-xl border border-slate-200 shadow-sm cursor-pointer overflow-hidden transition">
+        <div class="flex items-center gap-1.5 text-slate-700 text-xs font-semibold pointer-events-none">
+        <span></span>
+        <span>เลือกวัน</span>
+      </div>
+        <input type="date" id="date-picker" class="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10">
       </div>
     </div>
 
@@ -114,7 +115,7 @@
             <p class="text-xs font-medium text-slate-500 mt-0.5">098-6644402</p>
           </div>
           <!-- ✏️ แก้เบอร์โทรใน href="tel:..." ตรงนี้ เพื่อให้กดโทรออกได้ -->
-          <a href="tel:0800000000" class="bg-slate-700 hover:bg-slate-800 active:scale-95 text-white font-medium px-3.5 py-2 rounded-xl text-xs flex items-center gap-1 shadow flex-shrink-0 transition">
+          <a href="tel:098-6644402" class="bg-slate-700 hover:bg-slate-800 active:scale-95 text-white font-medium px-3.5 py-2 rounded-xl text-xs flex items-center gap-1 shadow flex-shrink-0 transition">
             <span>📞</span> โทร
           </a>
         </div>
@@ -129,7 +130,7 @@
             <p class="text-xs font-medium text-slate-500 mt-0.5">089-2094438</p>
           </div>
           <!-- ✏️ แก้เบอร์โทรใน href="tel:..." ตรงนี้ เพื่อให้กดโทรออกได้ -->
-          <a href="tel:0800000000" class="bg-slate-700 hover:bg-slate-800 active:scale-95 text-white font-medium px-3.5 py-2 rounded-xl text-xs flex items-center gap-1 shadow flex-shrink-0 transition">
+          <a href="tel:089-2094438" class="bg-slate-700 hover:bg-slate-800 active:scale-95 text-white font-medium px-3.5 py-2 rounded-xl text-xs flex items-center gap-1 shadow flex-shrink-0 transition">
             <span>📞</span> โทร
           </a>
         </div>

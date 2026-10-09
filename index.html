@@ -30,6 +30,7 @@
 }
   </style>
 </head>
+
 <body class="bg-slate-100 min-h-screen text-slate-800 pb-12 antialiased">
 
   <!-- ส่วนหัวเว็บ -->
@@ -69,6 +70,7 @@
       </div>
         <input type="date" id="date-picker" class="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10">
       </div>
+      
     </div>
 
     <!-- หน้าต่างสถานะโหลด -->
@@ -80,31 +82,49 @@
     <!-- กล่องแสดงรายชื่อเวร (เช้า / บ่าย) -->
     <div id="duty-content" class="hidden space-y-4">
       
-      <!-- เวรเช้า -->
-      <div>
-        <div class="flex items-center justify-between mb-2 px-1">
-          <h3 class="text-sm font-bold text-slate-700 flex items-center gap-2">
+      <!-- ================= โซนเวรเช้า ================= -->
+    <div class="mb-4">
+      <!-- หัวข้อ + ปุ่มคัดลอก -->
+      <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center gap-2">
+          <h2 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
             <span>☀️</span> เวรเช้า (06:00 - 14:00 น.)
-          </h3>
-          <span id="badge-morning" class="hidden text-[10px] bg-emerald-100 text-emerald-700 font-bold px-2 py-0.5 rounded-full border border-emerald-200 animate-pulse">
-            ● เวรปัจจุบัน
-          </span>
+          </h2>
+          <span id="badge-morning" class="hidden text-[10px] bg-emerald-100 text-emerald-700 font-semibold px-2 py-0.5 rounded-full animate-pulse">● เวรปัจจุบัน</span>
         </div>
-        <div id="morning-list" class="space-y-2"></div>
+        
+        <button type="button" id="btn-copy-morning" onclick="copyShiftSummary('เช้า')"
+          class="inline-flex items-center gap-1 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 text-xs font-semibold px-2.5 py-1 rounded-lg border border-slate-200 shadow-sm transition">
+          <span>📋</span>
+          <span id="text-copy-morning">คัดลอก</span>
+        </button>
       </div>
 
-      <!-- เวรบ่าย -->
-      <div>
-        <div class="flex items-center justify-between mb-2 px-1">
-          <h3 class="text-sm font-bold text-slate-700 flex items-center gap-2">
+      <!-- กล่องแสดงรายชื่อเวรเช้า (ตัวนี้สำคัญ ห้ามลบ) -->
+      <div id="morning-list" class="space-y-2"></div>
+    </div>
+
+    <!-- ================= โซนเวรบ่าย ================= -->
+    <div class="mb-4">
+      <!-- หัวข้อ + ปุ่มคัดลอก -->
+      <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center gap-2">
+          <h2 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
             <span>🌙</span> เวรบ่าย (14:00 - 22:00 น.)
-          </h3>
-          <span id="badge-afternoon" class="hidden text-[10px] bg-emerald-100 text-emerald-700 font-bold px-2 py-0.5 rounded-full border border-emerald-200 animate-pulse">
-            ● เวรปัจจุบัน
-          </span>
+          </h2>
+          <span id="badge-afternoon" class="hidden text-[10px] bg-emerald-100 text-emerald-700 font-semibold px-2 py-0.5 rounded-full animate-pulse">● เวรปัจจุบัน</span>
         </div>
-        <div id="afternoon-list" class="space-y-2"></div>
+        
+        <button type="button" id="btn-copy-afternoon" onclick="copyShiftSummary('บ่าย')"
+          class="inline-flex items-center gap-1 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 text-xs font-semibold px-2.5 py-1 rounded-lg border border-slate-200 shadow-sm transition">
+          <span>📋</span>
+          <span id="text-copy-afternoon">คัดลอก</span>
+        </button>
       </div>
+
+      <!-- กล่องแสดงรายชื่อเวรบ่าย (ตัวนี้สำคัญ ห้ามลบ) -->
+      <div id="afternoon-list" class="space-y-2"></div>
+    </div>
 
     </div>
 
@@ -158,7 +178,7 @@
     </div>
   </footer>
 
-  <!-- สคริปต์ระบบ -->
+  <!-- สคริปต์ระบบ (ตัวเต็มรวมทุกฟังก์ชัน) -->
   <script>
     const SHEET_ID = "17B3VlPejvxrG9VQxzBy17FhXAdz6M65SKmlm-uVfP70";
     const GVIZ_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
@@ -166,6 +186,24 @@
     let allSheetRows = [];
     let selectedDate = new Date();
 
+    // 1. ฟังก์ชันเปิด-ปิด ม่านโหลดข้อมูล
+    function showLoading() {
+      const loader = document.getElementById("loading-overlay");
+      if (loader) {
+        loader.classList.remove("opacity-0", "pointer-events-none");
+        loader.classList.add("opacity-100");
+      }
+    }
+
+    function hideLoading() {
+      const loader = document.getElementById("loading-overlay");
+      if (loader) {
+        loader.classList.remove("opacity-100");
+        loader.classList.add("opacity-0", "pointer-events-none");
+      }
+    }
+
+    // 2. ฟังก์ชันดึงข้อมูลจาก Google Sheets
     async function fetchDuty() {
       const loading = document.getElementById("loading");
       const dutyContent = document.getElementById("duty-content");
@@ -204,6 +242,7 @@
       }
     }
 
+    // 3. ฟังก์ชันตรวจจับวันที่ตรงกัน
     function checkDateMatch(dateVal, targetDate) {
       if (!dateVal) return false;
       const d = targetDate.getDate();
@@ -228,6 +267,7 @@
       return patterns.some(p => dateVal === p || dateVal.startsWith(p + " ") || dateVal.startsWith(p + "T"));
     }
 
+    // 4. ฟังก์ชันอัปเดตข้อมูลเวรตามวันที่เลือก
     function updateDutyByDate(targetDate) {
       const dateDisplay = document.getElementById("date-display");
       const isToday = new Date().toDateString() === targetDate.toDateString();
@@ -270,7 +310,6 @@
           const role = r.c[3] ? String(r.c[3].v || "").trim() : "เจ้าหน้าที่กู้ชีพ";
           const phone = r.c[4] ? String(r.c[4].v || "").trim() : "-";
           
-          // ดึงรูปลิงก์จากคอลัมน์ F ที่ได้จากสูตรใน Sheets โดยตรง
           const img = (r.c[5] && String(r.c[5].v).includes("http")) 
                       ? String(r.c[5].v).trim() 
                       : "https://cdn-icons-png.flaticon.com/512/847/847969.png";
@@ -287,6 +326,7 @@
       renderList("afternoon-list", afternoonStaff, activeShift === "บ่าย");
     }
 
+    // 5. แสดงรายชื่อในการ์ด (คลิกดูตารางส่วนตัวได้)
     function renderList(containerId, staffArray, isActiveShift) {
       const container = document.getElementById(containerId);
       if (!container) return;
@@ -307,7 +347,7 @@
 
         card.className = `bg-white rounded-2xl p-3 border ${borderStyle} flex items-center justify-between gap-3`;
         card.innerHTML = `
-          <div class="flex items-center gap-3 min-w-0">
+          <div class="flex items-center gap-3 min-w-0 flex-1 cursor-pointer active:opacity-75 transition" onclick="showStaffSchedule('${person.name.replace(/'/g, "\\'")}')">
             <img src="${person.image}" alt="${person.name}" 
                  class="w-14 h-14 rounded-full object-cover border border-slate-200 shadow-sm bg-slate-50 flex-shrink-0"
                  onerror="this.src='https://cdn-icons-png.flaticon.com/512/847/847969.png'">
@@ -318,7 +358,7 @@
             </div>
           </div>
           
-          <a href="tel:${person.phone}" 
+          <a href="tel:${person.phone}" onclick="event.stopPropagation()"
              class="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-medium px-4 py-2 rounded-xl text-xs flex items-center gap-1 shadow flex-shrink-0 transition">
             <span>📞</span> โทร
           </a>
@@ -327,6 +367,214 @@
       });
     }
 
+    // 6. ฟังก์ชันแปลงวันที่แบบครอบคลุม ป้องกัน Invalid Date
+    function parseDutyDate(cell) {
+      if (!cell) return null;
+      const rawV = String(cell.v || "").trim();
+      if (rawV.startsWith("Date(")) {
+        const parts = rawV.replace(/Date\(\vert{}\)/g, "").split(",").map(Number);
+        if (parts.length >= 3) return new Date(parts[0], parts[1], parts[2]);
+      }
+
+      const str = String(cell.f || cell.v || "").trim();
+      if (!str) return null;
+
+      if (/^\d{4}-\d{1,2}-\d{1,2}/.test(str)) {
+        const parts = str.split("-").map(Number);
+        let y = parts[0];
+        if (y > 2400) y -= 543;
+        return new Date(y, parts[1] - 1, parts[2]);
+      }
+
+      if (str.includes("/")) {
+        const parts = str.split("/").map(p => parseInt(p.trim(), 10));
+        if (parts.length === 3) {
+          let y = parts[2];
+          if (y > 2400) y -= 543;
+          else if (y < 100) y += 2000;
+          return new Date(y, parts[1] - 1, parts[0]);
+        }
+      }
+
+      const parsed = new Date(str);
+      return !isNaN(parsed.getTime()) ? parsed : null;
+    }
+
+    // 7. ฟังก์ชันแสดงตารางเวรรายบุคคล (Modal)
+    function showStaffSchedule(staffName) {
+      let targetStaff = null;
+      const dutyDates = [];
+
+      allSheetRows.forEach(r => {
+        if (!r.c || !r.c[2]) return;
+        const name = String(r.c[2].v || "").trim();
+        if (name === staffName) {
+          const shift = r.c[1] ? String(r.c[1].v || "").trim() : "";
+          const role = r.c[3] ? String(r.c[3].v || "").trim() : "เจ้าหน้าที่กู้ชีพ";
+          const phone = r.c[4] ? String(r.c[4].v || "").trim() : "-";
+          const img = (r.c[5] && String(r.c[5].v).includes("http")) 
+                      ? String(r.c[5].v).trim() 
+                      : "https://cdn-icons-png.flaticon.com/512/847/847969.png";
+
+          if (!targetStaff) targetStaff = { name, role, phone, img };
+
+          const dateObj = parseDutyDate(r.c[0]);
+          dutyDates.push({ dateObj, rawDate: String(r.c[0].f || r.c[0].v || "").trim(), shift });
+        }
+      });
+
+      if (!targetStaff) return;
+
+      dutyDates.sort((a, b) => (a.dateObj && b.dateObj ? a.dateObj - b.dateObj : 0));
+
+      document.getElementById("modal-img").src = targetStaff.img;
+      document.getElementById("modal-name").innerText = targetStaff.name;
+      document.getElementById("modal-role").innerText = targetStaff.role;
+      document.getElementById("modal-phone").innerText = targetStaff.phone;
+      document.getElementById("modal-call-btn").href = `tel:${targetStaff.phone}`;
+
+      let morningCount = 0;
+      let afternoonCount = 0;
+      const listContainer = document.getElementById("modal-schedule-list");
+      listContainer.innerHTML = "";
+
+      const today = new Date();
+      const todayStr = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
+
+      dutyDates.forEach(item => {
+        const isMorning = item.shift.includes("เช้า");
+        if (isMorning) morningCount++; else afternoonCount++;
+
+        let isToday = false;
+        if (item.dateObj && !isNaN(item.dateObj.getTime())) {
+          const itemDateStr = `${item.dateObj.getFullYear()}-${item.dateObj.getMonth()}-${item.dateObj.getDate()}`;
+          isToday = (itemDateStr === todayStr);
+        }
+
+        let dateText = item.rawDate;
+        if (item.dateObj && !isNaN(item.dateObj.getTime())) {
+          dateText = item.dateObj.toLocaleDateString("th-TH", {
+            weekday: 'short',
+            day: 'numeric',
+            month: 'short'
+          });
+        }
+
+        const itemEl = document.createElement("div");
+        itemEl.className = `p-2.5 rounded-xl border flex items-center justify-between text-xs ${
+          isToday ? 'bg-red-50 border-red-200 ring-1 ring-red-200' : 'bg-slate-50 border-slate-200/80'
+        }`;
+
+        itemEl.innerHTML = `
+          <div class="flex items-center gap-2">
+            <span class="text-base">${isMorning ? '☀️' : '🌙'}</span>
+            <div>
+              <span class="font-bold text-slate-800">${dateText}</span>
+              ${isToday ? '<span class="ml-1 text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full font-bold">วันนี้</span>' : ''}
+            </div>
+          </div>
+          <span class="font-semibold ${isMorning ? 'text-amber-700 bg-amber-100/60' : 'text-indigo-700 bg-indigo-100/60'} px-2 py-0.5 rounded-md">
+            ${isMorning ? 'เวรเช้า (06:00 - 14:00)' : 'เวรบ่าย (14:00 - 22:00)'}
+          </span>
+        `;
+        listContainer.appendChild(itemEl);
+      });
+
+      document.getElementById("modal-total-count").innerText = `เวรทั้งเดือน: ${dutyDates.length} วัน`;
+      document.getElementById("modal-morning-count").innerText = `☀️ เช้า ${morningCount}`;
+      document.getElementById("modal-afternoon-count").innerText = `🌙 บ่าย ${afternoonCount}`;
+
+      const modal = document.getElementById("staff-modal");
+      const modalContent = document.getElementById("staff-modal-content");
+      if (modal && modalContent) {
+        modal.classList.remove("opacity-0", "pointer-events-none");
+        modal.classList.add("opacity-100");
+        modalContent.classList.remove("translate-y-full");
+      }
+    }
+
+    function closeStaffModal() {
+      const modal = document.getElementById("staff-modal");
+      const modalContent = document.getElementById("staff-modal-content");
+      if (!modal) return;
+      if (modalContent) modalContent.classList.add("translate-y-full");
+      modal.classList.remove("opacity-100");
+      modal.classList.add("opacity-0", "pointer-events-none");
+    }
+
+    // 8. คัดลอกสรุปเวรแยกกะส่ง LINE
+    function copyShiftSummary(shiftType) {
+      const targetDate = selectedDate || new Date();
+      const formattedThaiDate = targetDate.toLocaleDateString("th-TH", {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+
+      const staffList = [];
+      const shiftTitle = shiftType === "เช้า" ? "☀️ เวรเช้า (06:00 - 14:00 น.)" : "🌙 เวรบ่าย (14:00 - 22:00 น.)";
+
+      allSheetRows.forEach(r => {
+        if (!r.c || !r.c[0]) return;
+        const dateVal = String(r.c[0].f || r.c[0].v || "").trim();
+
+        if (checkDateMatch(dateVal, targetDate)) {
+          const shift = r.c[1] ? String(r.c[1].v || "").trim() : "";
+          const name = r.c[2] ? String(r.c[2].v || "").trim() : "";
+          const role = r.c[3] ? String(r.c[3].v || "").trim() : "เจ้าหน้าที่กู้ชีพ";
+          const phone = r.c[4] ? String(r.c[4].v || "").trim() : "-";
+
+          if (name && name !== "-" && shift.includes(shiftType)) {
+            staffList.push(`- ${name} (${role}) โทร: ${phone}`);
+          }
+        }
+      });
+
+      const listText = staffList.length > 0 ? staffList.join("\n") : "- ไม่มีรายชื่อเจ้าหน้าที่ในเวรนี้";
+      const message = `🚑 ตารางเวรหน่วยกู้ชีพ ทต.สามขา\n📅 ประจำ${formattedThaiDate}\n\n${shiftTitle}\n${listText}.`;
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(message).then(() => onCopyDone(shiftType)).catch(() => fallbackCopy(message, shiftType));
+      } else {
+        fallbackCopy(message, shiftType);
+      }
+
+      function fallbackCopy(text, type) {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.left = "-9999px";
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        try {
+          document.execCommand("copy");
+          onCopyDone(type);
+        } catch (e) {
+          alert("ไม่สามารถคัดลอกได้");
+        }
+        document.body.removeChild(ta);
+      }
+
+      function onCopyDone(type) {
+        const textEl = document.getElementById(type === "เช้า" ? "text-copy-morning" : "text-copy-afternoon");
+        const btnEl = document.getElementById(type === "เช้า" ? "btn-copy-morning" : "btn-copy-afternoon");
+        if (textEl && btnEl) {
+          const oldText = textEl.innerText;
+          textEl.innerText = "✓ สำเร็จ";
+          btnEl.classList.remove("bg-slate-100", "text-slate-700");
+          btnEl.classList.add("bg-emerald-600", "text-white");
+          setTimeout(() => {
+            textEl.innerText = oldText;
+            btnEl.classList.remove("bg-emerald-600", "text-white");
+            btnEl.classList.add("bg-slate-100", "text-slate-700");
+          }, 1500);
+        }
+      }
+    }
+
+    // 9. ตั้งค่าตัวเลือกวัน และเริ่มโหลดข้อมูล
     const datePicker = document.getElementById("date-picker");
     if (datePicker) {
       const today = new Date();
@@ -338,9 +586,18 @@
         if (!e.target.value) return;
         const [y, m, d] = e.target.value.split("-").map(Number);
         selectedDate = new Date(y, m - 1, d);
-        updateDutyByDate(selectedDate);
+
+        showLoading();
+        setTimeout(() => {
+          updateDutyByDate(selectedDate);
+          hideLoading();
+        }, 500);
       });
     }
+
+    document.getElementById("staff-modal")?.addEventListener("click", function(e) {
+      if (e.target === this) closeStaffModal();
+    });
 
     fetchDuty();
 
@@ -348,5 +605,55 @@
       navigator.serviceWorker.register('./sw.js').catch((err) => console.log(err));
     }
   </script>
+  <!-- ม่านหน้าจอโหลด (Loading Overlay) -->
+    <div id="loading-overlay" class="fixed inset-0 bg-slate-900/30 backdrop-blur-sm z-50 flex flex-col items-center justify-center gap-3 transition-opacity duration-200 opacity-0 pointer-events-none">
+    <div class="bg-white p-5 rounded-3xl shadow-xl flex flex-col items-center gap-3">
+    <!-- วงล้อหมุนสีแดง -->
+    <div class="w-9 h-9 border-4 border-red-200 border-t-red-600 rounded-full animate-spin"></div>
+    <span class="text-xs font-semibold text-slate-700">กำลังโหลดข้อมูล...</span>
+      </div>
+    </div>
+    <!-- ป๊อปอัปแสดงตารางเวรรายบุคคล (Staff Schedule Modal) -->
+<div id="staff-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 opacity-0 pointer-events-none transition-opacity duration-200">
+  <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden transform transition-all translate-y-full sm:translate-y-0" id="staff-modal-content">
+    
+    <!-- ส่วนหัว: ข้อมูลเจ้าหน้าที่ + ปุ่มปิด -->
+    <div class="p-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3 min-w-0">
+        <img id="modal-img" src="" class="w-14 h-14 rounded-full object-cover border border-slate-200 shadow-sm bg-white flex-shrink-0">
+        <div class="min-w-0">
+          <span id="modal-role" class="text-[11px] font-semibold text-slate-500 block leading-tight"></span>
+          <h3 id="modal-name" class="text-base font-bold text-slate-800 truncate"></h3>
+          <p id="modal-phone" class="text-xs font-medium text-slate-500 mt-0.5"></p>
+        </div>
+      </div>
+      <button type="button" onclick="closeStaffModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-200/70 text-slate-600 hover:bg-slate-300 active:scale-95 transition text-sm font-bold flex-shrink-0">
+        ✕
+      </button>
+    </div>
+
+    <!-- แถบสรุปยอดเวรของเดือนนี้ -->
+    <div class="px-4 py-2.5 bg-red-50/60 border-b border-red-100/60 flex items-center justify-between text-xs">
+      <span class="font-bold text-red-700" id="modal-total-count">เวรทั้งเดือน: 0 ครั้ง</span>
+      <div class="flex gap-2">
+        <span class="px-2 py-0.5 bg-white text-amber-700 font-medium rounded-md border border-amber-200 shadow-2xs" id="modal-morning-count">☀️ เช้า 0</span>
+        <span class="px-2 py-0.5 bg-white text-indigo-700 font-medium rounded-md border border-indigo-200 shadow-2xs" id="modal-afternoon-count">🌙 บ่าย 0</span>
+      </div>
+    </div>
+
+    <!-- รายการวันที่เข้าเวร (เลื่อนดูได้) -->
+    <div class="p-4 overflow-y-auto space-y-2 flex-1" id="modal-schedule-list">
+      <!-- ข้อมูลจะถูกใส่ผ่าน JavaScript -->
+    </div>
+
+    <!-- ปุ่มโทรด้านล่างสุด -->
+    <div class="p-3 bg-white border-t border-slate-100">
+      <a id="modal-call-btn" href="#" class="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 shadow transition">
+        <span>📞</span> โทรติดต่อเจ้าหน้าที่
+      </a>
+    </div>
+
+  </div>
+</div>
 </body>
 </html>

@@ -532,7 +532,7 @@
       });
 
       const listText = staffList.length > 0 ? staffList.join("\n") : "- ไม่มีรายชื่อเจ้าหน้าที่ในเวรนี้";
-      const message = `🚑 ตารางเวรหน่วยกู้ชีพ ทต.สามขา\n📅 ประจำ${formattedThaiDate}\n\n${shiftTitle}\n${listText}.`;
+      const message = `🚑 เวรกู้ชีพ ทต.สามขา\n ประจำ${formattedThaiDate}\n\n${shiftTitle}\n${listText}.`;
 
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(message).then(() => onCopyDone(shiftType)).catch(() => fallbackCopy(message, shiftType));

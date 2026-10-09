@@ -400,7 +400,7 @@
       return !isNaN(parsed.getTime()) ? parsed : null;
     }
 
-        // 7. ฟังก์ชันแสดงตารางเวรรายบุคคล (Modal) - เพิ่มขอบเขียวไฮไลต์วันที่เลือก
+            // 7. ฟังก์ชันแสดงตารางเวรรายบุคคล (Modal) - ใส่ขอบเขียววันที่เลือก
     function showStaffSchedule(staffName) {
       let targetStaff = null;
       const dutyDates = [];
@@ -418,14 +418,32 @@
 
           if (!targetStaff) targetStaff = { name, role, phone, img };
 
-          const dateObj = parseDutyDate(r.c[0]);
-          dutyDates.push({ dateObj, rawDate: String(r.c[0].f || r.c[0].v || "").trim(), shift });
+          const rawDate = String(r.c[0].f || r.c[0].v || "").trim();
+          dutyDates.push({ rawDate, shift });
         }
       });
 
       if (!targetStaff) return;
 
-      dutyDates.sort((a, b) => (a.dateObj && b.dateObj ? a.dateObj - b.dateObj : 0));
+      // ฟังก์ชันแปลงวันที่ให้เป็นรูปแบบ ตัวเลข: ปี-เดือน-วัน เดียวกันเสมอ
+      const cleanDate = (str) => {
+        if (!str) return "";
+        const parts = String(str).trim().split(/[-/]/);
+        if (parts.length === 3) {
+          if (parts[0].length === 4) { // กรณี 2026-10-08
+            let y = parseInt(parts[0]); if (y > 2500) y -= 543;
+            return `${y}-${parseInt(parts[1])}-${parseInt(parts[2])}`;
+          } else { // กรณี 8/10/2026
+            let y = parseInt(parts[2]); if (y > 2500) y -= 543;
+            return `${y}-${parseInt(parts[1])}-${parseInt(parts[0])}`;
+          }
+        }
+        return str;
+      };
+
+      // ดึงวันที่ที่หน้าจอเลือกอยู่
+      const pickerVal = document.getElementById("date-picker") ? document.getElementById("date-picker").value : "";
+      const selectedKey = cleanDate(pickerVal);
 
       document.getElementById("modal-img").src = targetStaff.img;
       document.getElementById("modal-name").innerText = targetStaff.name;
@@ -438,66 +456,28 @@
       const listContainer = document.getElementById("modal-schedule-list");
       listContainer.innerHTML = "";
 
-      const today = new Date();
-      const todayStr = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
-
-      // ดึงวันที่ที่กำลังเปิดดูอยู่จาก date-picker (รูปแบบ YYYY-MM-DD)
-      const datePickerEl = document.getElementById("date-picker");
-      const selectedPickerVal = datePickerEl ? datePickerEl.value : "";
-
       dutyDates.forEach(item => {
         const isMorning = item.shift.includes("เช้า");
         if (isMorning) morningCount++; else afternoonCount++;
 
-        let isToday = false;
-        let isSelected = false;
-
-        if (item.dateObj && !isNaN(item.dateObj.getTime())) {
-          // 1. ตรวจสอบว่าตรงกับวันปัจจุบัน (วันนี้) หรือไม่
-          const itemDateStr = `${item.dateObj.getFullYear()}-${item.dateObj.getMonth()}-${item.dateObj.getDate()}`;
-          isToday = (itemDateStr === todayStr);
-
-          // 2. ตรวจสอบว่าตรงกับวันที่กำลังเปิดดูอยู่ (วันที่เลือก) หรือไม่
-          const y = item.dateObj.getFullYear();
-          const m = String(item.dateObj.getMonth() + 1).padStart(2, '0');
-          const d = String(item.dateObj.getDate()).padStart(2, '0');
-          const itemYMD = `${y}-${m}-${d}`;
-          isSelected = (itemYMD === selectedPickerVal);
-        }
-
-        let dateText = item.rawDate;
-        if (item.dateObj && !isNaN(item.dateObj.getTime())) {
-          dateText = item.dateObj.toLocaleDateString("th-TH", {
-            weekday: 'short',
-            day: 'numeric',
-            month: 'short'
-          });
-        }
-
-        // กำหนดรูปแบบขอบและการแสดงผล:
-        // - ถ้าเป็นวันที่กำลังเปิดดู -> ใส่ขอบเขียวเข้ม พื้นเขียวอ่อน เด่นชัดที่สุด
-        // - ถ้าเป็นวันนี้ (แต่ไม่ได้เลือกดู) -> ใส่ขอบแดงอ่อน
-        // - วันทั่วไป -> สีเทาปกติ
-        let cardStyle = "bg-slate-50 border-slate-200/80";
-        let badgeHtml = "";
-
-        if (isSelected) {
-          cardStyle = "bg-emerald-50 border-2 border-emerald-500 shadow-sm ring-1 ring-emerald-300";
-          badgeHtml = '<span class="ml-1 text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded-full font-bold shadow-sm">วันที่เลือก</span>';
-        } else if (isToday) {
-          cardStyle = "bg-red-50 border-red-200 ring-1 ring-red-200";
-          badgeHtml = '<span class="ml-1 text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full font-bold">วันนี้</span>';
-        }
+        // เช็กว่าแถวนี้ ตรงกับวันที่ที่กำลังเปิดดูอยู่หรือไม่
+        const isMatch = (cleanDate(item.rawDate) === selectedKey);
 
         const itemEl = document.createElement("div");
-        itemEl.className = `p-2.5 rounded-xl border flex items-center justify-between text-xs transition-all ${cardStyle}`;
+        
+        // ถ้าตรง: ใส่ขอบเขียวหนา พื้นเขียวอ่อน | ถ้าไม่ตรง: ขอบเทาปกติ
+        itemEl.className = `p-2.5 rounded-xl border flex items-center justify-between text-xs transition-all ${
+          isMatch 
+            ? 'bg-emerald-50 border-2 border-emerald-500 shadow-md ring-1 ring-emerald-300' 
+            : 'bg-slate-50 border-slate-200/80'
+        }`;
 
         itemEl.innerHTML = `
           <div class="flex items-center gap-2">
             <span class="text-base">${isMorning ? '☀️' : '🌙'}</span>
-            <div>
-              <span class="font-bold text-slate-800">${dateText}</span>
-              ${badgeHtml}
+            <div class="flex items-center">
+              <span class="font-bold text-slate-800">${item.rawDate}</span>
+              ${isMatch ? '<span class="ml-2 text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded-full font-bold shadow-sm animate-pulse">วันที่เลือก</span>' : ''}
             </div>
           </div>
           <span class="font-semibold ${isMorning ? 'text-amber-700 bg-amber-100/60' : 'text-indigo-700 bg-indigo-100/60'} px-2 py-0.5 rounded-md">
@@ -520,15 +500,6 @@
       }
     }
 
-
-    function closeStaffModal() {
-      const modal = document.getElementById("staff-modal");
-      const modalContent = document.getElementById("staff-modal-content");
-      if (!modal) return;
-      if (modalContent) modalContent.classList.add("translate-y-full");
-      modal.classList.remove("opacity-100");
-      modal.classList.add("opacity-0", "pointer-events-none");
-    }
 
     // 8. คัดลอกสรุปเวรแยกกะส่ง LINE
     function copyShiftSummary(shiftType) {

@@ -400,7 +400,7 @@
       return !isNaN(parsed.getTime()) ? parsed : null;
     }
 
-    // 7. ฟังก์ชันแสดงตารางเวรรายบุคคล (Modal)
+        // 7. ฟังก์ชันแสดงตารางเวรรายบุคคล (Modal) - เพิ่มขอบเขียวไฮไลต์วันที่เลือก
     function showStaffSchedule(staffName) {
       let targetStaff = null;
       const dutyDates = [];
@@ -441,14 +441,28 @@
       const today = new Date();
       const todayStr = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
 
+      // ดึงวันที่ที่กำลังเปิดดูอยู่จาก date-picker (รูปแบบ YYYY-MM-DD)
+      const datePickerEl = document.getElementById("date-picker");
+      const selectedPickerVal = datePickerEl ? datePickerEl.value : "";
+
       dutyDates.forEach(item => {
         const isMorning = item.shift.includes("เช้า");
         if (isMorning) morningCount++; else afternoonCount++;
 
         let isToday = false;
+        let isSelected = false;
+
         if (item.dateObj && !isNaN(item.dateObj.getTime())) {
+          // 1. ตรวจสอบว่าตรงกับวันปัจจุบัน (วันนี้) หรือไม่
           const itemDateStr = `${item.dateObj.getFullYear()}-${item.dateObj.getMonth()}-${item.dateObj.getDate()}`;
           isToday = (itemDateStr === todayStr);
+
+          // 2. ตรวจสอบว่าตรงกับวันที่กำลังเปิดดูอยู่ (วันที่เลือก) หรือไม่
+          const y = item.dateObj.getFullYear();
+          const m = String(item.dateObj.getMonth() + 1).padStart(2, '0');
+          const d = String(item.dateObj.getDate()).padStart(2, '0');
+          const itemYMD = `${y}-${m}-${d}`;
+          isSelected = (itemYMD === selectedPickerVal);
         }
 
         let dateText = item.rawDate;
@@ -460,17 +474,30 @@
           });
         }
 
+        // กำหนดรูปแบบขอบและการแสดงผล:
+        // - ถ้าเป็นวันที่กำลังเปิดดู -> ใส่ขอบเขียวเข้ม พื้นเขียวอ่อน เด่นชัดที่สุด
+        // - ถ้าเป็นวันนี้ (แต่ไม่ได้เลือกดู) -> ใส่ขอบแดงอ่อน
+        // - วันทั่วไป -> สีเทาปกติ
+        let cardStyle = "bg-slate-50 border-slate-200/80";
+        let badgeHtml = "";
+
+        if (isSelected) {
+          cardStyle = "bg-emerald-50 border-2 border-emerald-500 shadow-sm ring-1 ring-emerald-300";
+          badgeHtml = '<span class="ml-1 text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded-full font-bold shadow-sm">วันที่เลือก</span>';
+        } else if (isToday) {
+          cardStyle = "bg-red-50 border-red-200 ring-1 ring-red-200";
+          badgeHtml = '<span class="ml-1 text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full font-bold">วันนี้</span>';
+        }
+
         const itemEl = document.createElement("div");
-        itemEl.className = `p-2.5 rounded-xl border flex items-center justify-between text-xs ${
-          isToday ? 'bg-red-50 border-red-200 ring-1 ring-red-200' : 'bg-slate-50 border-slate-200/80'
-        }`;
+        itemEl.className = `p-2.5 rounded-xl border flex items-center justify-between text-xs transition-all ${cardStyle}`;
 
         itemEl.innerHTML = `
           <div class="flex items-center gap-2">
             <span class="text-base">${isMorning ? '☀️' : '🌙'}</span>
             <div>
               <span class="font-bold text-slate-800">${dateText}</span>
-              ${isToday ? '<span class="ml-1 text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full font-bold">วันนี้</span>' : ''}
+              ${badgeHtml}
             </div>
           </div>
           <span class="font-semibold ${isMorning ? 'text-amber-700 bg-amber-100/60' : 'text-indigo-700 bg-indigo-100/60'} px-2 py-0.5 rounded-md">
@@ -492,6 +519,7 @@
         modalContent.classList.remove("translate-y-full");
       }
     }
+
 
     function closeStaffModal() {
       const modal = document.getElementById("staff-modal");
